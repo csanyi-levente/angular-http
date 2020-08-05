@@ -1,7 +1,7 @@
 import { Injectable } from '@angular/core';
 import { Post } from './post.model';
-import { HttpClient, HttpHeaders } from '@angular/common/http';
-import { map , catchError} from 'rxjs/operators'
+import { HttpClient, HttpHeaders, HttpParams } from '@angular/common/http';
+import { map , catchError, tap} from 'rxjs/operators'
 import { Subject, throwError } from 'rxjs';
 
 @Injectable({
@@ -16,7 +16,10 @@ export class PostsService {
   	const postData: Post = {title: title, content: content};
     this.http.post(
       'https://angular-test-backend-1f2b5.firebaseio.com/posts.json',
-      postData
+      postData,
+      {
+     	 observe: 'response'
+      }
     )
     .subscribe(responseData => {
       console.log(responseData);
@@ -27,11 +30,15 @@ export class PostsService {
 
   fetchPosts() {
   	// return an Observable
-    return this.http.get<{ [key: string]: Post }>('https://angular-test-backend-1f2b5.firebaseio.com/posts.json',
+  	//let searchParams = new HttpHeaders();
+  	//searchParams = searchParams.append('print', 'pretty');
+  	//searchParams = searchParams.append('custom', 'value');
+    return this.http.get<{ [key: string]: Post }>(
+    	'https://angular-test-backend-1f2b5.firebaseio.com/posts.json',
     {
-    	headers: new HttpHeaders({
-    		'Custom': 'Hello'
-    	})
+    	headers: new HttpHeaders({'Custom': 'Hello'}),
+    	params: new HttpParams().set('print', 'pretty')
+    	//params: searchParams
     })
     .pipe(map(responseData => {
       const postsArray: Post[] = [];
@@ -49,6 +56,13 @@ export class PostsService {
   }
 
   deletePosts() {
-	return this.http.delete('https://angular-test-backend-1f2b5.firebaseio.com/posts.json');
+	return this.http.delete('https://angular-test-backend-1f2b5.firebaseio.com/posts.json',
+		{
+			observe: 'events',
+			responseType: 'text'
+		})
+	.pipe(tap(event => {
+		console.log(event);
+	}));
   }
 }
